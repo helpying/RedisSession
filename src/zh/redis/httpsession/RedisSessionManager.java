@@ -14,7 +14,9 @@ public class RedisSessionManager {
 	public static final String SESSION_ID_PREFIX = "RJSID_";
 	public static final String SESSION_ID_COOKIE = "RSESSIONID";
 	private RedisSimpleTempalte redisClient;
+	//Session最大更新间隔时间
 	private int expirationUpdateInterval;
+	//Session过期时间
 	private int maxInactiveInterval;
 
 	public RedisSessionManager() {
@@ -41,6 +43,14 @@ public class RedisSessionManager {
 		this.maxInactiveInterval = maxInactiveInterval;
 	}
 
+	/**
+	 * 每次请求取得最新Session
+	 * @param request
+	 * @param response
+	 * @param requestEventSubject
+	 * @param create
+	 * @return
+	 */
 	public RedisHttpSession createSession(
 			SessionHttpServletRequestWrapper request,
 			HttpServletResponse response,
@@ -48,14 +58,16 @@ public class RedisSessionManager {
 		String sessionId = getRequestedSessionId(request);
 
 		RedisHttpSession session = null;
+		//首次登录没有SeeionID，并且不创建新Session则不处理
 		if ((StringUtils.isEmpty(sessionId)) && (!(create)))
 			return null;
+		//如果SessionID不为空则从Redis加载Session
 		if (StringUtils.isNotEmpty(sessionId))
 			session = loadSession(sessionId);
-
+		//如果是首次登录则Session为空,生成空Session
 		if ((session == null) && (create))
 			session = createEmptySession(request, response);
-		
+		//如果Session不为空则，附加各种回调事件
 		if (session != null)
             attachEvent(session, request, response, requestEventSubject);
 		
@@ -74,19 +86,31 @@ public class RedisSessionManager {
 	private void saveSession(RedisHttpSession session) {
 		String sessionid = generatorSessionKey(session.id);
 		try {
+			//如果Session过期，则清楚Redis中的数据
 			if (session.expired)
 				this.redisClient.del(sessionid);
 			else
+				//保存Session并且重新设置过期时间
 				this.redisClient.set(sessionid, SeesionSerializer.serialize(session), this.maxInactiveInterval);
 		} catch (Exception e) {
 			throw new SessionException(e);
 		}
 	}
 	
+	/**
+	 * 增加Session过期和Request请求结束后的回调事件
+	 * @param session
+	 * @param request
+	 * @param response
+	 * @param requestEventSubject
+	 */
 	private void attachEvent(final RedisHttpSession session, final HttpServletRequestWrapper request, final HttpServletResponse response, RequestEventSubject requestEventSubject) {
-        session.setListener(new SessionListenerAdaptor(){
+        session.setListener(new SessionListener(){
             public void onInvalidated(RedisHttpSession session) {
+            	//设置客户端Cookies过期
                 saveCookie(session, request, response);
+                //保存Redis中的Session信息
+                saveSession(session);
             }
         });
         requestEventSubject.attach(new RequestEventObserver() {
@@ -101,6 +125,12 @@ public class RedisSessionManager {
         });
     }
 
+	/**
+	 * 初始化空Session
+	 * @param request
+	 * @param response
+	 * @return
+	 */
 	private RedisHttpSession createEmptySession(
 			SessionHttpServletRequestWrapper request,
 			HttpServletResponse response) {
@@ -122,14 +152,21 @@ public class RedisSessionManager {
 
         Cookie cookie = new Cookie(SESSION_ID_COOKIE, null);
         cookie.setPath(request.getContextPath());
+        //如果Session过期则Cookies也过期
         if(session.expired){
             cookie.setMaxAge(0);
+        //如果Session是新生成的，则需要在客户端设置SessionID
         }else if (session.isNew){
             cookie.setValue(session.getId());
 		}
         response.addCookie(cookie);
     }
 
+    /**
+     * 从Redis中重新加载Session
+     * @param sessionId
+     * @return
+     */
 	private RedisHttpSession loadSession(String sessionId) {
 		RedisHttpSession session;
 		try {
@@ -146,7 +183,7 @@ public class RedisSessionManager {
 		return null;
 	}
 
-	protected static String generatorSessionKey(String sessionId) {
+	private static String generatorSessionKey(String sessionId) {
 		return SESSION_ID_PREFIX.concat(sessionId);
 	}
 }

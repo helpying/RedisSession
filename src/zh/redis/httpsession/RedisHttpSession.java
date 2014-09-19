@@ -15,8 +15,17 @@ public class RedisHttpSession implements HttpSession, Serializable {
 	protected long lastAccessedTime = 0L;
 	protected String id;
 	protected int maxInactiveInterval;
+	/**
+	 * Session过期标志
+	 */
 	protected transient boolean expired;
+	/**
+	 * Session新建标志
+	 */
 	protected transient boolean isNew;
+	/**
+	 * Session同步标志，用于标记本地进程中的缓存对象与远程Redis中是否一致
+	 */
 	protected transient boolean isDirty;
 	private transient SessionListener listener;
 	private Map<String, Object> data;

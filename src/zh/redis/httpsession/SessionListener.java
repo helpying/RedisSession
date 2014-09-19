@@ -1,8 +1,10 @@
 package zh.redis.httpsession;
 
-public abstract interface SessionListener
-{
-  public abstract void onAttributeChanged(RedisHttpSession session);
-
-  public abstract void onInvalidated(RedisHttpSession session);
+public interface SessionListener{
+	/**
+	 * Session失效时监听
+	 * @param session
+	 */
+	public void onInvalidated(RedisHttpSession session);
+	
 }

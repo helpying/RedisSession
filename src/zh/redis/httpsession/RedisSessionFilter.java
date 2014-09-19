@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 public class RedisSessionFilter implements Filter {
+	//静态资源不做过滤
 	public static final String[] IGNORE_SUFFIX = { ".png", ".jpg", ".jpeg",".gif", ".css", ".js", ".html", ".htm", "swf"};
 	private RedisSessionManager sessionManager;
 
@@ -29,7 +30,7 @@ public class RedisSessionFilter implements Filter {
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) servletRequest;
 
-		if (!(shouldFilter(request))) {
+		if (!(ifFilter(request))) {
 			filterChain.doFilter(servletRequest, servletResponse);
 			return;
 		}
@@ -41,11 +42,17 @@ public class RedisSessionFilter implements Filter {
 		try {
 			filterChain.doFilter(requestWrapper, servletResponse);
 		} finally {
+			//保存最新的Session
 			eventSubject.completed(request, response);
 		}
 	}
 
-    private boolean shouldFilter(HttpServletRequest request) {
+	/**
+	 * 是否过滤请求
+	 * @param request
+	 * @return
+	 */
+    private boolean ifFilter(HttpServletRequest request) {
         String uri = request.getRequestURI().toLowerCase();
         for (String suffix : IGNORE_SUFFIX) {
             if (uri.endsWith(suffix)) return false;
