@@ -10,12 +10,17 @@
 		<init-param>
 			<!-- Redis 服务地址-->
 			<param-name>host</param-name>
-			<param-value>112.24.106.182</param-value>
+			<param-value>112.24.116.182</param-value>
 		</init-param>
 		<init-param>
 			<!-- Redis 服务端口 -->
 			<param-name>port</param-name>
 			<param-value>6379</param-value>
+		</init-param>
+		<init-param>
+			<!-- Session过期时间（秒） -->
+			<param-name>sessionTimeOut</param-name>
+			<param-value>1800</param-value>
 		</init-param>
 	</filter>
 	<filter-mapping>

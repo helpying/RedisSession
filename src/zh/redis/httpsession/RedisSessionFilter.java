@@ -18,7 +18,11 @@ public class RedisSessionFilter implements Filter {
 	public void init(FilterConfig filterConfig) throws ServletException {
 		int port = Integer.parseInt(filterConfig.getInitParameter("port"));
 		String host = filterConfig.getInitParameter("host");
-		this.sessionManager = new RedisSessionManager(host, port);
+		String sessionTimeOut = filterConfig.getInitParameter("sessionTimeOut");
+		if(sessionTimeOut == null)
+			this.sessionManager = new RedisSessionManager(host, port);
+		else
+			this.sessionManager = new RedisSessionManager(host, port, Integer.parseInt(sessionTimeOut));
 	}
 
 	public void setSessionManager(RedisSessionManager sessionManager) {

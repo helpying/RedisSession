@@ -17,16 +17,20 @@ public class RedisSessionManager {
 	//Session最大更新间隔时间
 	private int expirationUpdateInterval;
 	//Session过期时间
-	private int maxInactiveInterval;
+	private int sessionTimeOut;
 
 	public RedisSessionManager() {
 		this.expirationUpdateInterval = 300;
-		this.maxInactiveInterval = 1800;
+		this.sessionTimeOut = 1800;
 	}
 	
 	public RedisSessionManager(String host,int port) {
+		this(host,port,1800);
+	}
+	
+	public RedisSessionManager(String host,int port,int sessionTimeOut) {
 		this.expirationUpdateInterval = 300;
-		this.maxInactiveInterval = 1800;
+		this.sessionTimeOut = sessionTimeOut;
 		RedisClient rc = new RedisClient(host, port);
 		this.redisClient = new RedisSimpleTempalte(rc);
 	}
@@ -39,8 +43,8 @@ public class RedisSessionManager {
 		this.expirationUpdateInterval = expirationUpdateInterval;
 	}
 
-	public void setMaxInactiveInterval(int maxInactiveInterval) {
-		this.maxInactiveInterval = maxInactiveInterval;
+	public void setMaxInactiveInterval(int sessionTimeOut) {
+		this.sessionTimeOut = sessionTimeOut;
 	}
 
 	/**
@@ -95,7 +99,7 @@ public class RedisSessionManager {
 				this.redisClient.del(sessionid);
 			else
 				//保存Session并且重新设置过期时间
-				this.redisClient.set(sessionid, SeesionSerializer.serialize(session), this.maxInactiveInterval);
+				this.redisClient.set(sessionid, SeesionSerializer.serialize(session), this.sessionTimeOut);
 		} catch (Exception e) {
 			throw new SessionException(e);
 		}
@@ -146,7 +150,7 @@ public class RedisSessionManager {
 		RedisHttpSession session = new RedisHttpSession();
 		session.id = createSessionId();
 		session.creationTime = System.currentTimeMillis();
-		session.maxInactiveInterval = this.maxInactiveInterval;
+		session.maxInactiveInterval = this.sessionTimeOut;
 		session.isNew = true;
 		saveCookie(session, request, response);
 		return session;
