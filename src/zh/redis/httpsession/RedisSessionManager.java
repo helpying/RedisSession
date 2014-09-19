@@ -120,8 +120,11 @@ public class RedisSessionManager {
         requestEventSubject.attach(new RequestEventObserver() {
             public void completed(HttpServletRequest servletRequest, HttpServletResponse response) {
                 int updateInterval = (int) ((System.currentTimeMillis() - session.lastAccessedTime) / 1000);
-                //如果 Session一致 并且在最小间隔同步时间内  则不与Redis同步
-                if (session.isDirty == false && updateInterval < expirationUpdateInterval)
+                	//如果Session是初始化的空Session则需要同步到Redis
+                if (session.isNew == false
+                	//如果 Session一致 并且在最小间隔同步时间内  则不与Redis同步
+                	&& session.isDirty == false 
+                	&& updateInterval < expirationUpdateInterval)
                     return;
                 //如果 Session不与Redis同步
                 if (session.expired) return;
