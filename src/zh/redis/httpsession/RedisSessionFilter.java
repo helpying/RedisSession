@@ -37,9 +37,11 @@ public class RedisSessionFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) servletResponse;
 
 		RequestEventSubject eventSubject = new RequestEventSubject();
+		//生成Request包装器，替换原生的Request中的Session
 		SessionHttpServletRequestWrapper requestWrapper = new SessionHttpServletRequestWrapper(
 				request, response, this.sessionManager, eventSubject);
 		try {
+			//向下一处理器传递替换后的Request
 			filterChain.doFilter(requestWrapper, servletResponse);
 		} finally {
 			//保存最新的Session

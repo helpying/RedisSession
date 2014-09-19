@@ -9,6 +9,11 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionContext;
 
 @SuppressWarnings("deprecation")
+/**
+ * 实现HttpSession接口，替换原生的Session存取操作
+ * @author zhanghua
+ *
+ */
 public class RedisHttpSession implements HttpSession, Serializable {
 	private static final long serialVersionUID = 1L;
 	protected long creationTime = 0L;
@@ -28,6 +33,7 @@ public class RedisHttpSession implements HttpSession, Serializable {
 	 */
 	protected transient boolean isDirty;
 	private transient SessionListener listener;
+	//本地Session缓存，需要注意同远程Redis的数据同步
 	private Map<String, Object> data;
 
 	public RedisHttpSession() {

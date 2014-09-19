@@ -83,6 +83,10 @@ public class RedisSessionManager {
         return null;
     }
 
+    /**
+     * 保存Session
+     * @param session
+     */
 	private void saveSession(RedisHttpSession session) {
 		String sessionid = generatorSessionKey(session.id);
 		try {
@@ -116,9 +120,11 @@ public class RedisSessionManager {
         requestEventSubject.attach(new RequestEventObserver() {
             public void completed(HttpServletRequest servletRequest, HttpServletResponse response) {
                 int updateInterval = (int) ((System.currentTimeMillis() - session.lastAccessedTime) / 1000);
-                if (session.isNew == false && session.isDirty == false && updateInterval < expirationUpdateInterval)
+                //如果 Session一致 并且在最小间隔同步时间内  则不与Redis同步
+                if (session.isDirty == false && updateInterval < expirationUpdateInterval)
                     return;
-                if (session.isNew && session.expired) return;
+                //如果 Session不与Redis同步
+                if (session.expired) return;
                 session.lastAccessedTime = System.currentTimeMillis();
                 saveSession(session);
             }
@@ -171,7 +177,7 @@ public class RedisSessionManager {
 		RedisHttpSession session;
 		try {
 			session = SeesionSerializer.deserialize(this.redisClient.getByte(generatorSessionKey(sessionId)));
-
+			//重新加载到本地缓存的Session需要重新设置同步标志与新建标志
 			if (session != null) {
 				session.isNew = false;
 				session.isDirty = false;

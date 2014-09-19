@@ -9,6 +9,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+/**
+ * Session序列化工具类
+ * @author zhanghua
+ *
+ */
 public class SeesionSerializer {
 	
 	/**
